@@ -1,0 +1,11 @@
+BeautifulSoup4
+PyMuPDF
+pytesseract
+pymupdf4llm
+langchain
+langchain_ollama
+lama-index
+pdfplumber
+opencv-python
+chromadb
+faiss-cpu
