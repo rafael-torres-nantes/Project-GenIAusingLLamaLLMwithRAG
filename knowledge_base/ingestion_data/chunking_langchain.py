@@ -126,7 +126,7 @@ class ChunkSplitter:
 # Testando a funcionalidade com o texto exemplo
 if __name__ == '__main__':
     # Instanciando a classe TextChunkTool
-    chunks = TextChunkTool()
+    chunks = ChunkSplitter()
 
     # Dividindo o texto em chunks usando `split_text_into_chunks`
     text_chunks = chunks.character_split_documents(large_test_text)
