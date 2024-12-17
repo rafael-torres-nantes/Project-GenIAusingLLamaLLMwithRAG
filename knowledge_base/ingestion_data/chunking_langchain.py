@@ -66,7 +66,7 @@ No seu primeiro dia programando, João decidiu começar com algo simples. Ele ab
     A história de João é um lembrete de que todos nós temos o potencial de criar algo incrível. Com determinação e vontade de aprender, podemos superar qualquer desafio e transformar nossos sonhos em realidade. E tudo começa com um simples "Olá, mundo!".
 """
 
-class TextChunkTool:
+class ChunkSplitter:
     """
     Classe para dividir textos longos em chunks menores utilizando dois métodos:
     1. `CharacterTextSplitter` - Divide com base em caracteres e separadores.
@@ -125,10 +125,11 @@ class TextChunkTool:
     
 # Testando a funcionalidade com o texto exemplo
 if __name__ == '__main__':
+    # Instanciando a classe TextChunkTool
     chunks = TextChunkTool()
 
     # Dividindo o texto em chunks usando `split_text_into_chunks`
-    text_chunks = chunks.split_text_into_chunks(large_test_text)
+    text_chunks = chunks.character_split_documents(large_test_text)
     
     # Imprimindo os primeiros 100 caracteres de cada chunk (limite para visualização)
     print(text_chunks[:100])

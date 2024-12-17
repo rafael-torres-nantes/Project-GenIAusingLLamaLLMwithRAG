@@ -1,7 +1,7 @@
 # Importações de bibliotecas internas do projeto
 from knowledge_base.vector_database.faiss_database import VectorDatabaseFAISS
 from knowledge_base.vector_database.chroma_database import VectorDatabaseChroma
-from knowledge_base.ingestion_data.chunking_langchain import TextChunkTool
+from knowledge_base.ingestion_data.chunking_langchain import ChunkSplitter
 
 from llama_models.inference_model import LLAMAInferenceModel
 from llama_models.embedding_model import LLAMAEmbeddingModel
@@ -33,7 +33,7 @@ class Controller:
         self.vector_database_chroma = VectorDatabaseChroma()
 
         # Inicializa a ferramenta de fragmentação de texto
-        self.chunk_tool = TextChunkTool()
+        self.chunk_splitter = ChunkSplitter()
 
     def ingestion_data(self, pdf_file):
         """
@@ -61,7 +61,7 @@ class Controller:
             formated_content = dict_to_namedtuple(content)
 
             # Realiza a fragmentação do conteúdo em chunks
-            chunk_split = self.chunk_tool.recursive_split_documents([formated_content])
+            chunk_split = self.chunk_splitter.recursive_split_documents([formated_content])
             
             # Adiciona os chunks processados à lista
             chunked_data.append(chunk_split)
