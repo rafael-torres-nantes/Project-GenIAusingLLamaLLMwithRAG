@@ -8,8 +8,8 @@ from llama_models.embedding_model import LLAMAEmbeddingModel
 
 from prompt_template.prompts_template import create_prompt_template
 
-from scraping_data.scraping_pdf.ocr_text_llamaparser import PDFExtractor as LlamaPDFExtractor
-from scraping_data.scraping_pdf.ocr_text_pdfplumber import PDFExtractor
+from scraping_data.scraping_pdf.ocr_text_llamaparser import PDFExtractorLLAMA 
+from scraping_data.scraping_pdf.ocr_text_pdfplumber import PDFExtractorPlumber
 
 from utils.send_each_pdf_file import each_pdf_in_folder
 from utils.convert_dict_to_object import dict_to_namedtuple
@@ -22,8 +22,8 @@ class Controller:
     """
     def __init__(self):
         # Inicializa a extração de texto de PDFs usando diferentes métodos
-        self.llama_pdf_extractor = LlamaPDFExtractor()
-        self.pdf_extractor = PDFExtractor()
+        self.llama_pdf_extractor = PDFExtractorLLAMA()
+        self.plumber_pdf_extractor = PDFExtractorPlumber()
 
         # Inicializa os modelos de embedding e inferência
         self.llama_embedding_model = LLAMAEmbeddingModel()
@@ -50,7 +50,7 @@ class Controller:
         """
 
         # Extrai o conteúdo do PDF e o converte para Markdown
-        markdown_data = self.pdf_extractor.convert_pdf_to_markdown(pdf_file_path)
+        markdown_data = self.plumber_pdf_extractor.convert_pdf_to_markdown(pdf_file_path)
 
         # Lista para armazenar os dados fragmentados
         chunked_data = []
