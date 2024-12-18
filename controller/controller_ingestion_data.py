@@ -6,7 +6,7 @@ from knowledge_base.ingestion_data.chunking_langchain import ChunkSplitter
 from scraping_data.scraping_pdf.ocr_text_llamaparser import PDFExtractorLLAMA 
 from scraping_data.scraping_pdf.ocr_text_pdfplumber import PDFExtractorPlumber
 
-from utils.send_each_pdf_file import each_pdf_in_folder
+from utils.send_each_pdf_file import list_all_pdf_in_folder
 from utils.convert_dict_to_object import dict_to_namedtuple
 from utils.list_manipulation import flatten_documents
 
@@ -63,3 +63,16 @@ class ControllerIngestionData:
         except Exception as e:
             print(f"Erro ao fazer a Ingestão de Dados: {e}")
 
+    def ingestion_data_folder(self, folder_path="./data"):
+        """
+        Método de ingestão de dados:
+        Permite a ingestão de um arquivo PDF e seu processamento futuro.
+        
+        Args:
+            folder_path (str): Caminho para o diretório dos arquivos PDF a ser processado.
+        """
+        
+        list_path_pdf =list_all_pdf_in_folder(folder_path)
+        
+        for path_pdf in list_path_pdf:
+            self.ingestion_data(pdf_file_path=path_pdf)
