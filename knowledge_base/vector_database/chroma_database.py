@@ -13,7 +13,6 @@ CHROMA_PATH = os.getenv('CHROMA_PATH')
 
 # Inicializa o modelo de embeddings LLAMA
 llamaEmbeddingModel = LLAMAEmbeddingModel()
-embedding_model = llamaEmbeddingModel.get_embedding_model()
 
 class VectorDatabaseChroma:
     """
@@ -47,9 +46,9 @@ class VectorDatabaseChroma:
         """
         # Gera embeddings para a consulta e encontra os chunks mais similares
         results = self.collection.query(
-            query_texts=[query_text],  # Chroma gerará embeddings para isso
+            query_embeddings=[query_text],                      # Chroma gerará embeddings para isso
             n_results=n_results,
-            include=["documents", "metadatas"]  # Inclui documentos e metadados nos resultados
+            include=["documents", "metadatas", "embeddings"]    # Inclui documentos e metadados nos resultados
         )
         return results
     
@@ -85,11 +84,13 @@ class VectorDatabaseChroma:
         # Extrai conteúdos e metadados dos chunks
         chunk_content = [chunk.page_content for chunk in chunks]
         chunk_metadata = [chunk.metadata for chunk in chunks]
+        chunk_embeddings = [llamaEmbeddingModel.generate_embedding(chunk.page_content) for chunk in chunks]
         
         # Adiciona os documentos e metadados ao banco vetorial
         self.collection.add(
             documents=chunk_content,
             metadatas=chunk_metadata,
+            embeddings=chunk_embeddings,
             ids=[str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk.page_content)) for chunk in chunks]
         )
 

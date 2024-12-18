@@ -8,9 +8,9 @@ if '__main__' == __name__:
     # Exemplo de criação e salvamento de vetores usando Chroma
     controller_ingestion.ingestion_data_folder()
 
-    # query = "Quais lanes tem no LOL?"
+    query = "Quais lanes tem no LOL?"
 
-    # # Recupera dados relevantes do banco vetorial
-    # retrieve_data = controller_rag.execute_RAG(query)
+    # Recupera dados relevantes do banco vetorial
+    retrieve_data = controller_rag.execute_RAG(query)
 
-    # print(retrieve_data)
+    print(retrieve_data)

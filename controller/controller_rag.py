@@ -36,8 +36,15 @@ class ControllerRAG:
         Returns:
             dict: Dados recuperados do banco vetorial.
         """
-        retrieve_data = self.database_chroma.query_chromadb(query_text, n_results)
-        return retrieve_data
+        # Gera um vetor de embedding para a consulta textual
+        embedding_query = self.llama_embedding_model.generate_embedding(query_text)
+        
+        # Recupera dados do banco vetorial
+        retrieve_data = self.database_chroma.query_chromadb(embedding_query, n_results)
+        
+        # Retorna o primeiro documento recuperado
+        filter_data = retrieve_data['documents'][0]
+        return filter_data
 
     def generate_response(self, user_query, contexts):
         """
@@ -70,9 +77,11 @@ class ControllerRAG:
         """
         
         # Recupera dados relevantes do banco vetorial
+        print("[system] Recuperando dados do banco vetorial...")
         context = self.retrieve_data(user_query, n_results=5)
 
         # Gera resposta com base nos dados recuperados
+        print("[system] Gerando resposta...")
         response = self.generate_response(user_query, context)
         
         return response
@@ -81,9 +90,10 @@ if __name__ == "__main__":
     # Exemplo de uso da classe ControllerRAG
     controller = ControllerRAG()
 
+    # Query de exemplo
     query = "Oque são minions?"
 
     # Recupera dados relevantes do banco vetorial
     retrieve_data = controller.execute_RAG(query)
-
+    
     print(retrieve_data)

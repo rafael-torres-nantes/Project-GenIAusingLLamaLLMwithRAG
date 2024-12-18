@@ -71,8 +71,9 @@ class ControllerIngestionData:
         Args:
             folder_path (str): Caminho para o diretório dos arquivos PDF a ser processado.
         """
+        # Lista todos os arquivos PDF no diretório
+        pdf_file_paths = list_all_pdf_in_folder(folder_path)
         
-        list_path_pdf =list_all_pdf_in_folder(folder_path)
-        
-        for path_pdf in list_path_pdf:
-            self.ingestion_data(pdf_file_path=path_pdf)
+        # Processa cada arquivo PDF
+        for pdf_file_path in pdf_file_paths:
+            self.ingestion_data(pdf_file_path=pdf_file_path)
