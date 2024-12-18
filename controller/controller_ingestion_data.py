@@ -13,6 +13,7 @@ from scraping_data.scraping_pdf.ocr_text_pdfplumber import PDFExtractorPlumber
 
 from utils.send_each_pdf_file import each_pdf_in_folder
 from utils.convert_dict_to_object import dict_to_namedtuple
+from utils.list_manipulation import flatten_documents, flatten_metadatas
 
 class Controller:
     """
@@ -22,7 +23,6 @@ class Controller:
     """
     def __init__(self):
         # Inicializa a extração de texto de PDFs usando diferentes métodos
-        self.llama_pdf_extractor = PDFExtractorLLAMA()
         self.plumber_pdf_extractor = PDFExtractorPlumber()
 
         # Inicializa os modelos de embedding e inferência
@@ -30,25 +30,20 @@ class Controller:
         self.llama_inference_model = LLAMAInferenceModel()
 
         # Inicializa o banco de dados vetorial (Chroma)
-        self.vector_database_chroma = VectorDatabaseChroma()
+        self.database_chroma = VectorDatabaseChroma()
 
         # Inicializa a ferramenta de fragmentação de texto
         self.chunk_splitter = ChunkSplitter()
 
-    def ingestion_data(self, pdf_file):
+    def ingestion_data(self, pdf_file_path):
         """
         Método de ingestão de dados:
         Permite a ingestão de um arquivo PDF e seu processamento futuro.
+        
+        Args:
+            pdf_file_path (str): Caminho para o arquivo PDF a ser processado.
+        
         """
-        return None
-
-    def run_process(self, pdf_file_path="data/DummyPDF.pdf"):
-        """
-        Método run_process:
-        Realiza o processo de extração de texto de um arquivo PDF,
-        segmentação em chunks e exibe os resultados formatados.
-        """
-
         # Extrai o conteúdo do PDF e o converte para Markdown
         markdown_data = self.plumber_pdf_extractor.convert_pdf_to_markdown(pdf_file_path)
 
@@ -65,9 +60,28 @@ class Controller:
             
             # Adiciona os chunks processados à lista
             chunked_data.append(chunk_split)
+        
+        # Retorna os dados fragmentados
+        formated_chunks = flatten_documents(chunked_data)
+        
+        # Verifica se a fragmentação foi bem-sucedida
+        if len(formated_chunks) != len(chunked_data) * len(chunked_data[0]):
+            raise ValueError("Erro na fragmentação dos dados!")
 
-        # Exibe os dados fragmentados no console
-        print(chunked_data)
+        # Retorna os dados fragmentados
+        self.database_chroma.insert_into_chromadb(formated_chunks)
+            
+        return None
+
+    def run_process(self, pdf_file_path="data/DummyPDF.pdf"):
+        """
+        Método run_process:
+        Realiza o processo de extração de texto de um arquivo PDF,
+        segmentação em chunks e exibe os resultados formatados.
+        """
+
+        # Inicia o processo de ingestão de dados
+        self.ingestion_data(pdf_file_path)
 
         # Indica a conclusão do processo
         return print("Processo completado!")

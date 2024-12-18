@@ -30,9 +30,9 @@ class PDFExtractorPlumber:
         page_metadata = {
             "page_content": page_text,      # Texto extraído da página
             "metadata" : {
-                "page_number": f"{page_num + 1}",       # Número da página
-                "source": pdf_file,         # Caminho do arquivo PDF
-                "bounding_box": f"{getattr(page, "bbox", None)}",  # Caixa delimitadora da página
+                "page_number": f"{page_num + 1}",   # Número da página
+                "source": pdf_file,                 # Caminho do arquivo PDF
+                "bounding_box": f"{page.bbox}",     # Caixa delimitadora da página
             }
         }
         
