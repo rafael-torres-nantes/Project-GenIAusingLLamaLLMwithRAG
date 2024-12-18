@@ -13,6 +13,9 @@ class LLAMAEmbeddingModel:
         self.LLAMA_URL = LLAMA_URL
         
     def get_embedding_model(self):
+        """
+        Obtém o modelo de embeddings LLAMA.
+        """
         
         embedding_model = OllamaEmbeddings(model=self.LLAMA_MODEL)
 
