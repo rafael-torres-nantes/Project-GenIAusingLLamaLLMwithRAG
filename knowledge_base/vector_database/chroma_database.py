@@ -1,7 +1,9 @@
 import os
+import chromadb
+import uuid
 from dotenv import load_dotenv
-from langchain_chroma import Chroma 
 from llama_models.embedding_model import LLAMAEmbeddingModel
+from utils.file_manipulation import create_directory
 
 # Carregamento das variáveis de ambiente
 load_dotenv()
@@ -19,92 +21,107 @@ class VectorDatabaseChroma:
     Inclui métodos para criação, salvamento e carregamento de vetores.
     """
 
-    def __init__(self):
+    def __init__(self, database_name="my_database"):
         """
         Inicializa a instância da classe VectorDatabaseChroma.
         """
-        self.chroma_db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding_model)
-
-    def save_vectorstore(self, text_chunks):
+        # Cria o diretório de persistência se não existir
+        create_directory(CHROMA_PATH)
+        
+        # Inicializa o cliente persistente do ChromaDB
+        self.chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+        
+        # Cria ou recupera uma coleção
+        self.collection = self.chroma_client.get_or_create_collection(name=database_name)
+                     
+    def query_chromadb(self, query_text, n_results=5):
         """
-        Salva o armazenamento vetorial Chroma, evitando duplicatas.
+        Realiza uma consulta no banco vetorial Chroma usando texto de entrada.
 
         Args:
-            text_chunks (list): Lista de chunks de texto com metadados.
-        """
-        try:
-            chunks_with_ids = self.calculate_chunk_ids(text_chunks)
-            existing_items = self.retrieve_vectorstore()
-            existing_ids = set(existing_items["ids"])
-
-            # Filtra os chunks novos
-            new_chunks = [chunk for chunk in chunks_with_ids if chunk.metadata["id"] not in existing_ids]
-
-            if new_chunks:
-                print(f"👉 Adicionando novos documentos: {len(new_chunks)}")
-                new_chunk_ids = [chunk.metadata["id"] for chunk in new_chunks]
-                self.chroma_db.add_documents(new_chunks, ids=new_chunk_ids)
-                self.chroma_db.persist()
-            else:
-                print("✅ Nenhum novo documento para adicionar.")
-
-        except Exception as e:
-            print(f"Erro ao salvar o armazenamento vetorial: {e}")
-            raise
-
-    def retrieve_vectorstore(self):
-        """
-        Carrega o armazenamento vetorial Chroma do diretório especificado.
+            query_text (str): Texto da consulta.
+            n_results (int): Número de resultados desejados.
 
         Returns:
-            dict: Dados do armazenamento vetorial carregado.
+            dict: Resultados contendo documentos e metadados correspondentes.
         """
-        try:
-            return self.chroma_db.get(include=[])
-        except Exception as e:
-            print(f"Erro ao carregar o armazenamento vetorial: {e}")
-            raise
-
-    @staticmethod
-    def calculate_chunk_ids(text_chunks):
+        # Gera embeddings para a consulta e encontra os chunks mais similares
+        results = self.collection.query(
+            query_texts=[query_text],  # Chroma gerará embeddings para isso
+            n_results=n_results,
+            include=["documents", "metadatas"]  # Inclui documentos e metadados nos resultados
+        )
+        return results
+    
+    def insert_into_chromadb(self, chunks):
         """
-        Adiciona IDs únicos a cada chunk com base na origem e página.
+        Insere apenas chunks únicos no banco de dados vetorial Chroma.
 
         Args:
-            text_chunks (list): Lista de chunks a serem processados.
-
-        Returns:
-            list: Lista de chunks com IDs adicionados.
+            chunks (list): Lista de chunks de texto com metadados.
         """
-        last_page_id = None
-        current_chunk_index = 0
+        # Recupera IDs existentes no banco de dados
+        existing_ids = set(self.collection.get().get("ids", []))
 
-        for chunk in text_chunks:
-            source = chunk.metadata.get("source")
-            page = chunk.metadata.get("page")
-            current_page_id = f"{source}:{page}"
+        # Filtra chunks que ainda não estão no banco de dados
+        new_chunks = [
+            chunk for chunk in chunks 
+            if str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk.page_content)) not in existing_ids
+        ]
+        if new_chunks:
+            print(f"👉 Adicionando novos documentos: {len(new_chunks)}")
+            self.add_chunks_to_collection(new_chunks)
+            return print("✅ Documentos adicionados com sucesso.")
+        
+        return print("✅ Nenhum novo documento para adicionar.")
+    
+    def add_chunks_to_collection(self, chunks):
+        """
+        Adiciona chunks de texto e metadados à coleção.
 
-            if current_page_id == last_page_id:
-                current_chunk_index += 1
-            else:
-                current_chunk_index = 0
-
-            chunk.metadata["id"] = f"{current_page_id}:{current_chunk_index}"
-            last_page_id = current_page_id
-
-        return text_chunks
+        Args:
+            chunks (list): Lista de chunks de texto com metadados.
+        """
+        # Extrai conteúdos e metadados dos chunks
+        chunk_content = [chunk.page_content for chunk in chunks]
+        chunk_metadata = [chunk.metadata for chunk in chunks]
+        
+        # Adiciona os documentos e metadados ao banco vetorial
+        self.collection.add(
+            documents=chunk_content,
+            metadatas=chunk_metadata,
+            ids=[str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk.page_content)) for chunk in chunks]
+        )
 
 if __name__ == '__main__':
-    # Exemplo de uso da classe VectorDatabaseChroma
+    # Inicializa a classe VectorDatabaseChroma
     vector_database = VectorDatabaseChroma()
 
-    # Texto de exemplo para teste
+    # Exemplo de texto dividido em chunks
     text_chunks = [
-        'Este é um exemplo de texto para teste.',
-        'Vamos dividir este texto em chunks menores.',
-        'Cada chunk terá um tamanho máximo de 10 palavras.'
+        "Este é um exemplo de texto para teste.",
+        "Vamos dividir este texto em chunks menores.",
+        "Cada chunk terá um tamanho máximo de 10 palavras."
     ]
 
-    # Criação e salvamento de vetores usando Chroma
-    vectorstore = vector_database.get_vectorstore(text_chunks)
-    vector_database.save_vectorstore(text_chunks)
+    # Metadados correspondentes aos chunks
+    metadata = [
+        {"source": "exemplo_1", "page": 1},
+        {"source": "exemplo_2", "page": 2},
+        {"source": "exemplo_3", "page": 3}
+    ]
+
+    # Insere os chunks no banco vetorial
+    print("Adicionando chunks ao banco vetorial...")
+    vector_database.insert_into_chromadb(text_chunks)
+
+    # Realiza uma consulta no banco vetorial
+    print("\nConsultando no banco vetorial...")
+    query = "texto para teste"
+    results = vector_database.query_chromadb(query_text=query, n_results=2)
+
+    # Exibe os resultados da consulta
+    print("\nResultados da consulta:")
+    for doc, meta in zip(results['documents'], results['metadatas']):
+        print(f"- Documento: {doc}")
+        print(f"  Metadados: {meta}")
