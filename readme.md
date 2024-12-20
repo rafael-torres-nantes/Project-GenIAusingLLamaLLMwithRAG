@@ -1,4 +1,4 @@
-# Extração e Processamento de PDFs com Modelos LLAMA
+# 🦙 Extração e Processamento de PDFs com Modelos LLAMA
 
 ## 👨‍💻 Projeto desenvolvido por: 
 [Rafael Torres Nantes](https://github.com/rafael-torres-nantes)
